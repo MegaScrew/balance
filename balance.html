@@ -6,12 +6,101 @@
     <link href="../../assets/css/bootstrap-reboot.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>.progress-bar{display: flex;align-items: center;flex-direction: row}</style>
 	<title>Обновление баланса</title>
 </head>
 <body>
-	hello	
+<div class="container-fluid">
+    <div class="text-center">
+        <h1>Обновление баланса</h1>
+    </div>
+</div>	
+<div class="container-fluid">
+    <div class="row mt-3 mb-xl-5">
+        <div class="col-3 m-auto">
+            <div class="card mt-3" id="InputCard">
+                <h5 class="card-header">Обновление баланса по списку</h5>
+                <div class="card-body">
+                    <form class="form" id="formdata">
+                        <div class="share-form">
+                            <div class="d-flex">
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="InputChooseFile" name="uploaded_file" lang="ru" aria-describedby="InputChooseFile" required>
+                                    <label class="custom-file-label" for="InputChooseFile" data-browse="Обзор">Выберите файл</label>
+                                </div>
+                                <div>
+                                    <button class="btn btn-outline-secondary" type="button" id="InputChooseFileAdd_Button">Загрузить</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer" id="InputCardFooter" >
+                    <div class="progress" style="height: 20px;" id="progress" hidden="hidden">
+                        <div class="progress-bar progress-bar-striped" id="general-progress" role="progressbar" style="min-width: 3em" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            <i class="fa fa-spinner fa-spin fa-fw" hidden="hidden"></i><span id="progress-value">0%</span>
+                        </div>
+                    </div>
+                    <p class="text-success font-weight-bold" id="successStatement" hidden="hidden">success</p>
+                    <p class="text-danger font-weight-bold" id="warningStatement" hidden="hidden">warning</p>
+                </div>
+			</div>
+		</div>
+	</div>
+    <div class="row justify-content-center">
+	    <div class="col-12 mt-3 mb-xl-5" id="accordion">
+	        <div class="accordion" id="resultStep">
+	            <div class="card" id="cardStep2" hidden="hidden">
+	                <div class="card-header" id="headingOne">
+	                    <h2 class="mb-0 d-flex">
+	                        <button class="btn btn-link btn-block text-left mr-1" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">Не найден ID магазина</button>
+	                        <button type="button" class="btn btn-block btn-secondary text-center" style="width: 140px" id="getCSVStep2" onclick="get_csv('getCSVStep2')">Скачать CSV</button>
+	                    </h2>
+	                </div>
+	                <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#resultStep">
+	                    <div class="card-body">
+	                        <div class="table-responsive" id="Step2"></div>    
+	                    </div>
+	                </div>
+	            </div>
+	            <div class="card" id="cardStep4" hidden="hidden">
+	                <div class="card-header" id="headingTwo">
+	                    <h2 class="mb-0 d-flex">
+	                        <button class="btn btn-link btn-block text-left mr-1" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo" id="btnCollapseTwo">Найденные сделки по которым можно обновить аванс</button>
+	                        <button type="button" class="btn btn-block btn-danger text-center mr-1" style="width: 320px" id="goStep6" onclick="issueAnInvoice()">Сформировать квитанции</button>
+	                        <button type="button" class="btn btn-block btn-secondary text-center" style="width: 160px" id="getCSVStep4" onclick="get_csv('getCSVStep4')">Скачать CSV</button>
+	                    </h2>
+	                </div>
+	                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#resultStep">
+	                    <div class="card-body">
+	                        <div class="table-responsive" id="Step4"></div>    
+	                    </div>
+	                </div>
+	            </div>
+	            <div class="card" id="cardStep41" hidden="hidden">
+	                <div class="card-header" id="headingThree">
+	                    <h2 class="mb-0 d-flex">
+	                        <button class="btn btn-link btn-block text-left mr-1" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree" id="btnheadingThree">Не найдены сделки в группе стадий "В работе" (аванс обновить нельзя)</button>
+	                        <button type="button" class="btn btn-block btn-danger text-center mr-1" style="width: 320px" id="goStep5" onclick="MoveNoShipment()" hidden="hidden">Перенести в "Без отгрузок"</button>
+	                        <button type="button" class="btn btn-block btn-secondary text-center" style="width: 160px" id="getCSVStep41" onclick="get_csv('getCSVStep41')">Скачать CSV</button>
+	                    </h2>
+	                </div>
+	                <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#resultStep">
+	                    <div class="card-body">
+	                        <div class="table-responsive" id="Step41"></div>    
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+    </div>
+</div>
 <script src="https://code.jquery.com/jquery-latest.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
-<script src="script.js"></script>	
+<script> 
+	var r=Math.round(99999999*Math.random()) 
+
+	document.write("<SCRIPT LANGUAGE=JavaScript src='script.js?r="+r+"'><\/SCRIPT>")
+</script>	
 </body>
 </html>
