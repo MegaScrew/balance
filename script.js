@@ -1,1 +1,324 @@
-alert('Привет!');
+var warningStatement = document.getElementById("warningStatement");
+var successStatement = document.getElementById("successStatement");
+var Step2 = document.getElementById("Step2");
+var Step4 = document.getElementById("Step4");
+var Step41 = document.getElementById("Step41");
+var btnCollapseTwo = document.getElementById("btnCollapseTwo");
+var btnheadingThree = document.getElementById("btnheadingThree");
+
+$(document).ready(function () {
+        let flag = false;
+        // Нажатие кнопки выбор файла
+        $('#InputChooseFile').on('change',function(){
+            percent = 0;
+            // console.log(this.id);
+            // получаем имя файла
+            var fileName = $(this).val();
+            // измените значение "fake path" (в Chrome) на пустую строку
+            fileName = fileName.replace("C:\\fakepath\\", "");
+            // заменяем надпись "Выберите файл" в label
+            $(this).next('.custom-file-label').html(fileName);
+
+            $( "#general-progress" ).css('width', percent + '%');
+            $( "#progress-value" ).html(percent + '%');
+            $( "#progress" ).prop('hidden', true);
+            $( ".fa-spinner" ).prop('hidden', true);
+            $( "#general-progress" ).removeClass('progress-bar-animated');
+            $( "#general-progress" ).removeClass('bg-success');
+            $( "#successStatement" ).prop('hidden', true);
+            $( "#cardStep2" ).prop('hidden', true);
+            $( "#cardStep4" ).prop('hidden', true);
+            $( "#cardStep41" ).prop('hidden', true);
+            
+            if( this.value ){
+                flag = true;
+            } else { // Если после выбранного тыкнули еще раз, но дальше cancel
+                flag = false;
+                $(this).next('.custom-file-label').html("Выберите файл");
+            }
+        })
+
+        $('#InputChooseFileAdd_Button').click(function () {
+            percent += 2;
+            $( "#general-progress" ).css('width', percent + '%');
+            $( "#progress-value" ).html(percent + '%');
+            $( "#progress" ).prop('hidden', false);
+            $( ".fa-spinner" ).prop('hidden', false);
+            $( "#general-progress" ).addClass('progress-bar-animated');
+            $( "#cardStep2" ).prop('hidden', true);
+            $( "#cardStep4" ).prop('hidden', true);
+            $( "#cardStep41" ).prop('hidden', true);
+
+
+            if (flag) {
+                percent += 4;
+                $( "#general-progress" ).css('width', percent + '%');
+                $( "#progress-value" ).html(percent + '%');
+                $( "#warningStatement" ).prop('hidden', true);
+            }else{
+                if (!flag) {warningStatement.innerHTML = 'Выбирете файл';} 
+                $( "#warningStatement" ).prop('hidden', false);
+                // alert('Выбирете файл');
+                $( "#progress" ).prop('hidden', true);
+                $( ".fa-spinner" ).prop('hidden', true);
+                $( "#general-progress" ).removeClass('progress-bar-animated');
+                return false;
+            }
+
+            // Step 1 reading a file
+            //////////////////////////////////////////////////////
+
+            let data = new FormData($('#formdata').get(0));
+            $.ajax({
+                url         : 'handler.php',
+                type        : 'POST', // важно!
+                data        : data,
+                cache       : false,
+                // dataType    : 'json',
+                // отключаем обработку передаваемых данных, пусть передаются как есть
+                processData : false,
+                // отключаем установку заголовка типа запроса. Так jQuery скажет серверу что это строковой запрос
+                contentType : false,
+
+                beforeSend : function(){
+                    data.set( 'Step', 1 );
+                    percent += 2;
+                    $( "#general-progress" ).css('width', percent + '%');
+                    $( "#progress-value" ).html(percent + '%');
+                    successStatement.innerHTML = 'Start';
+                },
+
+                complete : function(){
+
+                },
+
+                success : function(respond, status, jqXHR ){
+                    // console.log(respond);
+                    Recordings = (JSON.parse(respond))['recordings'];
+                    percent += 2;
+                    $( "#general-progress" ).css('width', percent + '%');
+                    $( "#progress-value" ).html(percent + '%');
+                    successStatement.innerHTML = 'Step 1 reading a file';
+                    $( "#successStatement" ).prop('hidden', false);
+
+                     // Step 2 search for the company ID by internal number;
+                    $.ajax({
+                        url         : 'handler.php',
+                        type        : 'POST', // важно!
+                        data        : {'Step' : '2', 'recordings': JSON.stringify(Recordings)},
+
+                        beforeSend : function(){
+                            percent += 5;
+                            $( "#general-progress" ).css('width', percent + '%');
+                            $( "#progress-value" ).html(percent + '%');
+                            successStatement.innerHTML = 'Start search for the company ID by internal number';
+                        },
+
+                        // функция успешного ответа сервера
+                        success     : function(respond, status, jqXHR ){
+                            // console.log(respond);
+                            Recordings = (JSON.parse(respond))['recordings'];
+                            percent += 5;
+                            $( "#general-progress" ).css('width', percent + '%');
+                            $( "#progress-value" ).html(percent + '%');
+                            successStatement.innerHTML = 'Finish search for the company ID by internal number';
+                            // console.log(Recordings);
+                            if (respond.includes('recordingsNotFound')){
+                                RecordingsNotFound = (JSON.parse(respond))['recordingsNotFound'];
+                                console.log(RecordingsNotFound);
+                                $( "#cardStep2" ).prop('hidden', false);
+                                Step2.innerHTML = printTable(RecordingsNotFound);
+                            }
+
+                            // Step 3 search for a deal by company ID
+                            $.ajax({
+                                url         : 'handler.php',
+                                type        : 'POST', // важно!
+                                data        : {'Step' : '3', 'recordings': JSON.stringify(Recordings)},
+
+                                beforeSend : function(){
+                                    percent += 20;
+                                    $( "#general-progress" ).css('width', percent + '%');
+                                    $( "#progress-value" ).html(percent + '%');
+                                    successStatement.innerHTML = 'Start search for a deal by company ID';
+                                },
+
+                                // функция успешного ответа сервера
+                                success     : function(respond, status, jqXHR ){
+                                    // console.log(respond);
+                                    
+                                    if (respond.includes('recordings')){
+                                        Recordings = (JSON.parse(respond))['recordings'];
+                                        console.log(Recordings);
+                                        $( "#cardStep4" ).prop('hidden', false);
+                                        btnCollapseTwo.innerHTML = `Найденные сделки по которым можно обновить аванс`;
+                                        Step4.innerHTML = printTableDeals(Recordings);
+                                    }
+
+                                    if (respond.includes('recordingsNotFound')){
+                                        recordingsNotFound = (JSON.parse(respond))['recordingsNotFound'];
+                                        console.log(recordingsNotFound);
+                                        $( "#cardStep41" ).prop('hidden', false);
+                                        btnheadingThree.innerHTML = `Не найдены сделки в группе стадий "В работе" (аванс обновить нельзя)`;
+                                        Step41.innerHTML = printTableDeals(recordingsNotFound);
+                                    }
+
+                                    if (!respond.includes('recordings')){
+                                        percent += 10;
+                                    }
+
+                                    if (!respond.includes('recordingsNotFound')){
+                                        percent += 10;
+                                    }
+
+                                    percent += 20;
+                                    $( "#general-progress" ).css('width', percent + '%');
+                                    $( "#progress-value" ).html(percent + '%');
+                                    successStatement.innerHTML = 'Finish search for a deal by company ID';
+
+                                    if (percent == 100) {
+                                        $( ".fa-spinner" ).prop('hidden', true);
+                                        $( "#progress-value" ).html(percent + '% Finish!');
+                                        $( "#general-progress" ).addClass('bg-success');
+                                        $( "#general-progress" ).removeClass('progress-bar-animated');    
+                                    }
+                                },
+                            });
+
+
+
+
+
+                        },
+                    })    
+                },
+
+                error: function( jqXHR, status, errorThrown ){
+                    console.log( 'ОШИБКА AJAX запроса: ' + status, jqXHR, errorThrown);
+                    $( "#progress" ).prop('hidden', true);
+                    $( ".fa-spinner" ).prop('hidden', true);
+                    $( "#general-progress" ).removeClass('progress-bar-animated');
+                    $( "#successStatement" ).prop('hidden', true);
+
+                    $( "#warningStatement" ).prop('hidden', false);
+                        let messageAJAX = '';
+                            if (jqXHR.status === 0) {
+                                messageAJAX = 'Неизвестная ошибка:\n' + jqXHR.responseText;
+                            } else if (jqXHR.status == 404) {
+                                messageAJAX = 'НЕ найдена страница запроса [404]';
+                            } else if (jqXHR.status == 500) {
+                                messageAJAX = 'НЕ найден домен в запросе [500]';
+                            } else if (jqXHR.status == 502) {
+                                messageAJAX = 'НЕ найден домен в запросе [502]';
+                            } else if (jqXHR.status == 503) {
+                                messageAJAX = 'НЕ найден домен в запросе [503]';
+                            } else if (jqXHR.status == 504) {
+                                messageAJAX = 'НЕ найден домен в запросе [504]';
+                            } else if (exception === 'parsererror') {
+                                messageAJAX = "Ошибка в коде: \n"+jqXHR.responseText ;
+                            } else if (exception === 'timeout') {
+                                messageAJAX = 'Не ответил на запрос.';
+                            } else if (exception === 'abort') {
+                                messageAJAX = 'Прерван запрос Ajax.' ;
+                            } else {
+                                messageAJAX = 'Неизвестная ошибка:\n' + jqXHR.responseText;
+                            }
+                            warningStatement.innerHTML = 'ОШИБКА AJAX запроса: ' + messageAJAX;
+                        }
+
+            })
+
+        })
+})
+
+function printTable(data) {
+    let str = '';
+    data.forEach(function(item, i, data){
+    str = str + `<tr>
+                    <td>${i+1}</td>
+                    <td><a href="https://rahalcrm.bitrix24.ru/crm/company/details/${item[3]}/" target="_blank">${item[3]}</a></td> 
+                    <td>${item[0]}</td>
+                    <td>${item[1]}</td>                                                                       
+                </tr>`;
+    });
+
+    htmlTable = `<div class="text-center">
+                    <h3>Записей: ${data.length}</h3>
+                    <table class="m-auto table-striped table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <td>№</td>
+                                <td>ID магазина</td>
+                                <td>Внутренний номер</td>
+                                <td>Баланс</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${str}
+                        </tbody>
+                       </table>
+                </div>`;
+    return htmlTable;
+}
+
+function printTableDeals(data) {
+    let str = '';
+    data.forEach(function(item, i, data){
+    str = str + `<tr>
+                    <td>${i+1}</td>
+                    <td><a href="https://rahalcrm.bitrix24.ru/crm/deal/details/${item[3]}/" target="_blank">${item[3]}</a></td>
+                    <td><a href="https://rahalcrm.bitrix24.ru/crm/company/details/${item[2]}/" target="_blank">${item[2]}</a></td> 
+                    <td>${item[0]}</td>
+                    <td>${item[1]}</td>                                                                       
+                </tr>`;
+    });
+
+     htmlTable = `<div class="text-center">
+                    <h3>Записей: ${data.length}</h3>
+                    <table class="m-auto table-striped table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <td>№</td>
+                                <td>ID Сделки</td>
+                                <td>ID магазина</td>
+                                <td>Внутренний номер</td>
+                                <td>Баланс</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${str}
+                        </tbody>
+                    </table>
+                </div>`;
+    return htmlTable;
+}
+
+function printTableNoShipment(data) {        
+    let str = '';
+    data.forEach(function(item, i, data){
+    str = str + `<tr>
+                    <td>${i+1}</td>
+                    <td><a href="https://rahalcrm.bitrix24.ru/crm/deal/details/${item['ID']}/" target="_blank">${item['ID']}</a></td> 
+                    <td>${item['STAGE_ID']}</td>
+                    <td><a href="https://rahalcrm.bitrix24.ru/crm/company/details/${item['COMPANY_ID']}/" target="_blank">${item['COMPANY_ID']}</a></td>                                                                   
+                </tr>`;
+    });
+
+    htmlTable = `<div class="text-center">
+                    <h3>Записей: ${data.length}</h3>
+                    <table class="m-auto table-striped table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <td>№</td>
+                                <td>ID сделки</td>
+                                <td>Стадия</td>
+                                <td>ID магазина</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${str}
+                        </tbody>
+                    </table>
+                </div>`;
+    return htmlTable;
+}       
