@@ -66,6 +66,31 @@ function checkArr(int $number, array &$auto, array &$manual){      // функц
 }
 
 /**
+* searches for 1 in an array string and moves the found string to a new array before deleting it from the search array
+* @param $number - number key in row array
+* @param $auto - the array in which we will search
+* @param $manual - the array to which we will transfer the found
+* @return 0
+*/
+function checkArr2(int $number, array &$auto, array &$manual){      // функция для проверки массива
+    $i = 0;
+    $arrSplice = [];
+    foreach ($auto as &$row){             // перебираем массив 
+        if ($row[$number] != 0) {
+            array_push($manual, $row);    
+            array_push($arrSplice, $i);         // записываем индекс документа 
+        }
+        $i++;
+    }
+
+    for ($i=0; $i < count($arrSplice); $i++) {  // в цикле перебираем и удаляем  документы 
+        unset($auto[$arrSplice[$i]]);
+    }
+        
+    $auto = array_values($auto);                // переиндексируем массив что бы индексы были по парядку без дыр на тот случай если захотим идти циклом по индексам 
+}
+
+/**
 * Get id everyone company
 * @param $method - Rest API request method 
 * @return array
