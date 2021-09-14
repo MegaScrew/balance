@@ -8,7 +8,7 @@ switch ($_POST['Step']) {
 		echo(json_encode($params, JSON_UNESCAPED_UNICODE));
 
 		// echo '<pre>';
-		// 	echo 'Step 1';
+		// 	echo 'Step 1 ';
 		// echo '</pre>';
 		break;
 	case '2':
@@ -44,7 +44,7 @@ switch ($_POST['Step']) {
 		echo(json_encode($params, JSON_UNESCAPED_UNICODE));
 		
 		// echo '<pre>';
-		// 	echo 'Step 2';
+		// 	echo 'Step 2 ';
 		// echo '</pre>';	
 		break;
 	case '3':
@@ -86,9 +86,7 @@ switch ($_POST['Step']) {
 		echo(json_encode($params, JSON_UNESCAPED_UNICODE));
 
 		// echo '<pre>';
-		// 	echo 'Step 4';
-		// echo '</pre>';
-		// echo '<pre>';
+		// 	echo 'Step 4 ';
 			// print_r($recordings);
 			// print_r($recordingsNotFound);
 			// print_r($noShipment);
