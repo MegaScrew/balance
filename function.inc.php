@@ -25,11 +25,11 @@ function myReadFile(array $file){	// функция чтения файла
                 $i++; 
                 continue;
             }
-			$recordings[$i-1][0] = 0;
-			$recordings[$i-1][1] = 0;
+			$recordings[$i-1][0] = $columns[0];
+			$recordings[$i-1][1] = $columns[1];
 			$recordings[$i-1][2] = 0;
-			$recordings[$i-1][3] = $columns[3];
-			$recordings[$i-1][4] = $columns[4];
+			$recordings[$i-1][3] = 0;
+			$recordings[$i-1][4] = 0;
 			$i++;
 		}
 
@@ -263,9 +263,7 @@ function getAllDeals(string $method = 'crm.deal.list'){
     /***********************************************/
     $params = [
         'filter' => [
-            'CLOSED' => 'N',                                       // Сделка не закрыта
-            'CATEGORY_ID' => 12,
-            '!STAGE_ID' => 'C12:6',                                   
+            'CLOSED' => 'N',                                       // Сделка не закрыта                                   
             'STAGE_SEMANTIC_ID' => 'P'  //   P - промежуточная стадия, S - успешная стадия, F - провальная стадия (стадии).
         ],
         'select' => [
@@ -301,9 +299,7 @@ function getAllDeals(string $method = 'crm.deal.list'){
             'method' => $method,
             'params' => [ 
                 'filter' => [
-                    'CLOSED' => 'N',                                       // Сделка не закрыта
-                    'CATEGORY_ID' => 12,
-                    '!STAGE_ID' => 'C12:6',                                   
+                    'CLOSED' => 'N',                                       // Сделка не закрыта                                  
                     'STAGE_SEMANTIC_ID' => 'P'  //   P - промежуточная стадия, S - успешная стадия, F - провальная стадия (стадии).
                 ],
                 'select' => [
