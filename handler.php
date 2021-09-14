@@ -1,9 +1,11 @@
 <?php
 require_once 'function.inc.php';
 
+$recordingsNotFound =[];
 switch ($_POST['Step']) {
 	case '1':
 		$file = myReadFile($_FILES);
+		$params = array('step' => 1);
 		$params += $file;
 		echo(json_encode($params, JSON_UNESCAPED_UNICODE));
 
@@ -22,7 +24,7 @@ switch ($_POST['Step']) {
 			foreach ($tempRecordings as $rowtest) {
 				$strTemp = str_replace($order, $replace, $rowtest['UF_CRM_1594794891']);
 				$strTemp = trim($strTemp);
-				if ($row[3] == (int)$strTemp) {	
+				if ($row[0] == (int)$strTemp) {	
 					$row[2] = $rowtest['ID'];
 					break;
 				}				
@@ -55,8 +57,8 @@ switch ($_POST['Step']) {
 		foreach ($recordings as &$row) {
 			foreach ($dealList as &$rowtest) {
 				if (strcasecmp($row[2], $rowtest['COMPANY_ID']) == 0) {
-					$row[1] = $rowtest['ID'];
-					$row[0] = $rowtest['STAGE_ID'];
+					$row[3] = $rowtest['ID'];
+					$row[4] = $rowtest['STAGE_ID'];
 					$rowtest[3] = 1;
 					break;
 
@@ -64,12 +66,9 @@ switch ($_POST['Step']) {
 			}
 		}
 
-		checkArr2(3, $dealList, $noShipment);
-		unset($noShipment);
+		checkArr(3, $recordings, $recordingsNotFound);					// проверяем найдена или нет активная сделка в направлении Оплата за КГ по ID магазина
 
-		checkArr(1, $recordings, $recordingsNotFound);					// проверяем найдена или нет активная сделка в направлении Оплата за КГ по ID магазина
-
-		$params = array('step' => 4);
+		$params = array('step' => 3);
 
 		if (count($recordings) != 0) {
 			$params += array('recordings' => $recordings);
@@ -79,17 +78,14 @@ switch ($_POST['Step']) {
 			$params += array( 'recordingsNotFound' => $recordingsNotFound);
 		}
 		
-		if (count($dealList) != 0) {
-			$params += array('noShipment' => $dealList);
-		}
-
 		echo(json_encode($params, JSON_UNESCAPED_UNICODE));
 
 		// echo '<pre>';
-		// 	echo 'Step 4 ';
-			// print_r($recordings);
-			// print_r($recordingsNotFound);
-			// print_r($noShipment);
+		// 	echo 'Step 3 ';
+		// 	echo 'recordings';
+		// 	print_r($recordings);
+		// 	echo 'recordingsNotFound';
+		// 	print_r($recordingsNotFound);
 		// echo '</pre>';
 		break;
 	case '4':
