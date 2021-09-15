@@ -47,6 +47,7 @@ switch ($_POST['Step']) {
 		
 		// echo '<pre>';
 		// 	echo 'Step 2 ';
+		// 	print_r($tempRecordings
 		// echo '</pre>';	
 		break;
 	case '3':
@@ -90,9 +91,9 @@ switch ($_POST['Step']) {
 		break;
 	case '4':
 		$recordings = json_decode($_POST['recordings'], true);
-		$temp = issueAnInvoice('crm.deal.update', $recordings);
+		$temp = updateBalance('crm.deal.update', $recordings);
 
-		$params = array('Step5' => 'finish');
+		$params = array('step' => 4,'result' => 'finish', 'result' => $temp);
 		echo(json_encode($params, JSON_UNESCAPED_UNICODE));
 
 		// echo '<pre>';
