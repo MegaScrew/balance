@@ -92,6 +92,7 @@ switch ($_POST['Step']) {
 	case '4':
 		$recordings = json_decode($_POST['recordings'], true);
 		$temp = updateBalance('crm.deal.update', $recordings);
+		// $temp = fastUpdateDeals($recordings);
 
 		$params = array('step' => 4,'result' => 'finish', 'result' => $temp);
 		echo(json_encode($params, JSON_UNESCAPED_UNICODE));

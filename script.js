@@ -355,7 +355,7 @@ function updateBalance() {
                 current_call++;
                 arData.push(Recordings[current_call - 1]);
 
-                if ((arData.length == 100) || (current_call == calls)) {
+                if ((arData.length == 150) || (current_call == calls)) {
                     $.ajax({
                         url         : 'handler.php',
                         type        : 'POST', // важно!
@@ -395,11 +395,10 @@ function updateBalance() {
                     });
                     sleep(1000);
                     arData.length = 0;
-
                 }
-
-
             } while (current_call < calls);
+
+
 
             // $.ajax({
             //     url         : 'handler.php',
