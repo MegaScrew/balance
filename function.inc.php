@@ -21,15 +21,11 @@ function myReadFile(array $file){	// функция чтения файла
 	if (($handle = fopen($uploadfile, "r")) !== FALSE) {
 		while (($row = stream_get_line($handle, 1024 * 1024, "\n")) !== false) {
 			$columns = explode(';', $row);                // разбиваем строку на две части по символу ;
-            if ($i == 0) {
-                $i++; 
-                continue;
-            }
-			$recordings[$i-1][0] = $columns[0];
-			$recordings[$i-1][1] = $columns[1];
-			$recordings[$i-1][2] = 0;
-			$recordings[$i-1][3] = 0;
-			$recordings[$i-1][4] = 0;
+			$recordings[$i][0] = $columns[0];
+			$recordings[$i][1] = $columns[1];
+			$recordings[$i][2] = 0;
+			$recordings[$i][3] = 0;
+			$recordings[$i][4] = 0;
 			$i++;
 		}
 
@@ -99,6 +95,9 @@ function getBigData(string $method = 'crm.company.list'){
 
     /***********************************************/
     $params = [
+        'order'  => [
+            'ID' => 'ASC'
+        ],
         'filter' => [
             '>UF_CRM_1594794891' => 0    // Внутренний номер магазина боьше нуля
         ],
@@ -132,7 +131,10 @@ function getBigData(string $method = 'crm.company.list'){
 
         $temp = [                                   // Собираем запрос
             'method' => $method,
-            'params' => [ 
+            'params' => [
+                'order'  => [
+                    'ID' => 'ASC'
+                ],
                 'filter' => [
                     '>UF_CRM_1594794891' => 0    // Внутренний номер магазина боьше нуля
                 ],
@@ -156,12 +158,19 @@ function getBigData(string $method = 'crm.company.list'){
 
 
             $result = CRest::callBatch($arData);                // Вызываем callBatch
+
+            // echo '<pre>';
+            //     print_r($result);
+            // echo '</pre>';
+
             while($result['error']=="QUERY_LIMIT_EXCEEDED"){
                 sleep(1);
                 $result = CRest::callBatch($arData);
                 if ($result['error']<>"QUERY_LIMIT_EXCEEDED"){break;}
             }
-
+            // echo '<pre>';
+            //     print_r($result);
+            // echo '</pre>';
             $resultTemp = $result['result']['result'];          // Убираем лишнее вложение в массиве
             
             foreach ($resultTemp as $company){                  // Перебираем массив что бы 
@@ -182,7 +191,7 @@ function getBigData(string $method = 'crm.company.list'){
 * @param $method - Rest API request method 
 * @return 0
 */
-function issueAnInvoice(string $method = 'crm.deal.update', array $arDeal){
+function updateBalance(string $method = 'crm.deal.update', array $arDeal){
     $total = count($arDeal);          // Всего записей в выборке
     $calls = $total;                  // Сколько запросов надо сделать
     $current_call = 0;                // Номер текущего запроса
@@ -201,13 +210,11 @@ function issueAnInvoice(string $method = 'crm.deal.update', array $arDeal){
         $temp = [                                   // Собираем запрос
             'method' => $method,
             'params' => [
-                'ID' => $arDeal[$current_call-1][1],        // ID сделки
+                'ID' => $arDeal[$current_call-1][3],        // ID сделки
                 'fields' => [
-                    'STAGE_ID' => 'C12:EXECUTING',        // новая стадия
+                    'UF_CRM_1628167713' => $arDeal[$current_call-1][1],        // новый баланс
                 ],
-                'params' => [
-                    'REGISTER_SONET_EVENT' => 'Y',       // произвести регистрацию события изменения сделки в живой ленте. Дополнительно будет отправлено уведомление ответственному за сделку.
-                ]
+                'start' => -1
             ]
         ];
 
@@ -261,7 +268,10 @@ function issueAnInvoice(string $method = 'crm.deal.update', array $arDeal){
 function getAllDeals(string $method = 'crm.deal.list'){
 
     /***********************************************/
-    $params = [
+    $params = [       
+        'order'  => [
+            'ID' => 'ASC'
+        ],
         'filter' => [
             'CLOSED' => 'N',                                       // Сделка не закрыта                                   
             'STAGE_SEMANTIC_ID' => 'P'  //   P - промежуточная стадия, S - успешная стадия, F - провальная стадия (стадии).
@@ -297,7 +307,10 @@ function getAllDeals(string $method = 'crm.deal.list'){
 
         $temp = [                                   // Собираем запрос
             'method' => $method,
-            'params' => [ 
+            'params' => [            
+                'order'  => [
+                    'ID' => 'ASC'
+                ], 
                 'filter' => [
                     'CLOSED' => 'N',                                       // Сделка не закрыта                                  
                     'STAGE_SEMANTIC_ID' => 'P'  //   P - промежуточная стадия, S - успешная стадия, F - провальная стадия (стадии).
