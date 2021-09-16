@@ -42,7 +42,7 @@ $(document).ready(function () {
         })
 
         $('#InputChooseFileAdd_Button').click(function () {
-            percent += 2;
+            percent = 2;
             $( "#general-progress" ).css('width', percent + '%');
             $( "#progress-value" ).html(percent + '%');
             $( "#progress" ).prop('hidden', false);
@@ -330,7 +330,7 @@ function sleep(ms) {
     ms += new Date().getTime();
     while (new Date() < ms){}
     console.log('next ajax');
-} 
+}
 
 function updateBalance() {
 
@@ -350,7 +350,7 @@ function updateBalance() {
             let call_count = 0;                  // Счетчик вызовов для соблюдения условия не больше 2-х запросов в секунду
             let batch = 150;                // записей в пачке
             let call_batch = Math.ceil(total / batch);  // сколько запрсов надо сделать            
-            let k = Math.floor((5 / call_batch * 100) / 100 );
+            let k = Math.floor(5 / call_batch * 100) / 100 ;
 
             let arData = [];                // Массив для вызова callBatch
 
@@ -369,11 +369,11 @@ function updateBalance() {
                             percent += k;
                             $( "#general-progress" ).css('width', percent + '%');
                             $( "#progress-value" ).html(percent + '%');
-                            successStatement.innerHTML = 'Start update Balance';
+                            successStatement.innerHTML = `Start batch update Balance`;
                         },
 
                         complete : function(){
-                            successStatement.innerHTML = 'Finish update Balance';
+                            successStatement.innerHTML = `Finish batch update Balance`;
                         },
 
                         // функция успешного ответа сервера
@@ -382,16 +382,16 @@ function updateBalance() {
                             percent += k;
                             $( "#general-progress" ).css('width', percent + '%');
                             $( "#progress-value" ).html(percent + '%');
-                            successStatement.innerHTML = 'Finish update Balance';
+                            successStatement.innerHTML = `Finish batch update Balance`;
 
                             if (respond.includes('recordings')){
                                 Recordings = (JSON.parse(respond))['recordings'];
                                 console.log(Recordings);
                             }
 
-                            if (percent >= 100) {
+                            if (Math.round(percent) >= 100) {
                                 $( ".fa-spinner" ).prop('hidden', true);
-                                $( "#progress-value" ).html(percent + '% Finish!');
+                                $( "#progress-value" ).html(Math.round(percent) + '% Finish!');
                                 $( "#general-progress" ).addClass('bg-success');
                                 $( "#general-progress" ).removeClass('progress-bar-animated');    
                             }
@@ -399,8 +399,8 @@ function updateBalance() {
                     });
                     arData.length = 0;
                     sleep(1000);
-                    if (call_count == 6) {call_count = 0; sleep(180000);}
                 }
+                if (call_count == 6) {call_count = 0; sleep(180000);}  
             } while (current_call < calls);
 
 
