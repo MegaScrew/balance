@@ -21,15 +21,11 @@ function myReadFile(array $file){	// функция чтения файла
 	if (($handle = fopen($uploadfile, "r")) !== FALSE) {
 		while (($row = stream_get_line($handle, 1024 * 1024, "\n")) !== false) {
 			$columns = explode(';', $row);                // разбиваем строку на две части по символу ;
-            if ($i == 0) {
-                $i++; 
-                continue;
-            }
-			$recordings[$i-1][0] = $columns[0];
-			$recordings[$i-1][1] = $columns[1];
-			$recordings[$i-1][2] = 0;
-			$recordings[$i-1][3] = 0;
-			$recordings[$i-1][4] = 0;
+			$recordings[$i][0] = $columns[0];
+			$recordings[$i][1] = $columns[1];
+			$recordings[$i][2] = 0;
+			$recordings[$i][3] = 0;
+			$recordings[$i][4] = 0;
 			$i++;
 		}
 
@@ -99,6 +95,9 @@ function getBigData(string $method = 'crm.company.list'){
 
     /***********************************************/
     $params = [
+        'order'  => [
+            'ID' => 'ASC'
+        ],
         'filter' => [
             '>UF_CRM_1594794891' => 0    // Внутренний номер магазина боьше нуля
         ],
@@ -132,7 +131,10 @@ function getBigData(string $method = 'crm.company.list'){
 
         $temp = [                                   // Собираем запрос
             'method' => $method,
-            'params' => [ 
+            'params' => [
+                'order'  => [
+                    'ID' => 'ASC'
+                ],
                 'filter' => [
                     '>UF_CRM_1594794891' => 0    // Внутренний номер магазина боьше нуля
                 ],
@@ -156,12 +158,19 @@ function getBigData(string $method = 'crm.company.list'){
 
 
             $result = CRest::callBatch($arData);                // Вызываем callBatch
+
+            // echo '<pre>';
+            //     print_r($result);
+            // echo '</pre>';
+
             while($result['error']=="QUERY_LIMIT_EXCEEDED"){
                 sleep(1);
                 $result = CRest::callBatch($arData);
                 if ($result['error']<>"QUERY_LIMIT_EXCEEDED"){break;}
             }
-
+            // echo '<pre>';
+            //     print_r($result);
+            // echo '</pre>';
             $resultTemp = $result['result']['result'];          // Убираем лишнее вложение в массиве
             
             foreach ($resultTemp as $company){                  // Перебираем массив что бы 
@@ -182,7 +191,7 @@ function getBigData(string $method = 'crm.company.list'){
 * @param $method - Rest API request method 
 * @return 0
 */
-function issueAnInvoice(string $method = 'crm.deal.update', array $arDeal){
+function updateBalance(string $method = 'crm.deal.update', array $arDeal){
     $total = count($arDeal);          // Всего записей в выборке
     $calls = $total;                  // Сколько запросов надо сделать
     $current_call = 0;                // Номер текущего запроса
@@ -201,13 +210,11 @@ function issueAnInvoice(string $method = 'crm.deal.update', array $arDeal){
         $temp = [                                   // Собираем запрос
             'method' => $method,
             'params' => [
-                'ID' => $arDeal[$current_call-1][1],        // ID сделки
+                'ID' => $arDeal[$current_call-1][3],        // ID сделки
                 'fields' => [
-                    'STAGE_ID' => 'C12:EXECUTING',        // новая стадия
+                    'UF_CRM_1628167713' => $arDeal[$current_call-1][1],        // новый баланс
                 ],
-                'params' => [
-                    'REGISTER_SONET_EVENT' => 'Y',       // произвести регистрацию события изменения сделки в живой ленте. Дополнительно будет отправлено уведомление ответственному за сделку.
-                ]
+                'start' => -1
             ]
         ];
 
@@ -216,7 +223,7 @@ function issueAnInvoice(string $method = 'crm.deal.update', array $arDeal){
         if ((count($arData) == 50) || ($current_call == $calls)) {  // Если в массиве параметров arData 50 запросов или это последний запрос
             
             $call_count++;                                      // При каждом вызове увеличиваем счетчик
-            if ($call_count == 2) {                             // Проверяем счетчик вызовов call_count
+            if ($call_count == 3) {                             // Проверяем счетчик вызовов call_count
                 sleep(1);                                       // Если да то делаем паузу 1 сек
                 $call_count = 0;                                // Сбрасываем счетчик
             }
@@ -261,7 +268,10 @@ function issueAnInvoice(string $method = 'crm.deal.update', array $arDeal){
 function getAllDeals(string $method = 'crm.deal.list'){
 
     /***********************************************/
-    $params = [
+    $params = [       
+        'order'  => [
+            'ID' => 'ASC'
+        ],
         'filter' => [
             'CLOSED' => 'N',                                       // Сделка не закрыта                                   
             'STAGE_SEMANTIC_ID' => 'P'  //   P - промежуточная стадия, S - успешная стадия, F - провальная стадия (стадии).
@@ -297,7 +307,10 @@ function getAllDeals(string $method = 'crm.deal.list'){
 
         $temp = [                                   // Собираем запрос
             'method' => $method,
-            'params' => [ 
+            'params' => [            
+                'order'  => [
+                    'ID' => 'ASC'
+                ], 
                 'filter' => [
                     'CLOSED' => 'N',                                       // Сделка не закрыта                                  
                     'STAGE_SEMANTIC_ID' => 'P'  //   P - промежуточная стадия, S - успешная стадия, F - провальная стадия (стадии).
@@ -353,35 +366,173 @@ function getCSV(array $data, string $name = '', &$output, string $pattern = '1')
     $temp = [];
     $temp2 = [];
     if ((int)$pattern == 1) {
-        fputcsv($output, array('Внутренний номер', 'Вес за период'), ';');
+        fputcsv($output, array('Внутренний номер', 'Баланс'), ';');
 
-        foreach ($data as $value) {
-            $temp2[0] = $value[3];
-            $temp2[1] = $value[4];
-            array_push($temp, $temp2);
-        }
+        $temp = $data;
     }
     
     if ((int)$pattern == 2) {
-        fputcsv($output, array('ID Сделки', 'ID магазина', 'Внутренний номер', 'Вес за период'), ';');
+        fputcsv($output, array('ID Сделки', 'ID магазина', 'Внутренний номер', 'Баланс'), ';');
         
         foreach ($data as $value) {
-            $temp2[0] = $value[1];
+            $temp2[0] = $value[3];
             $temp2[1] = $value[2];
-            $temp2[2] = $value[3];
-            $temp2[3] = $value[4];
+            $temp2[2] = $value[0];
+            $temp2[3] = $value[1];
             array_push($temp, $temp2);
         }
     }
     
     if ((int)$pattern == 3) {
-        fputcsv($output, array('ID Сделки', 'Стадия', 'ID магазина',), ';');
+        fputcsv($output, array('ID магазина', 'Внутренний номер', 'Баланс'), ';');
         
-        $temp = $data;
+        foreach ($data as $value) {
+            $temp2[1] = $value[2];
+            $temp2[2] = $value[0];
+            $temp2[3] = $value[1];
+            array_push($temp, $temp2);
+        }
     }
 
     foreach ($temp as $value) {
         fputcsv($output, $value, ";");
     }
+}
+
+
+/*
+*Test function batch in batch
+*
+*/
+function fastUpdateDeals(array $arDeal){
+    // $hook = 'https://rahalcrm.bitrix24.ru/rest/1644/2rm45f7ep5heth5b/'; //указываем адрес вебхука
+    $hook = C_REST_WEB_HOOK_URL;
+    $method = 'crm.deal.update'; //указываем метод rest
+    $total = count($arDeal); 
+
+    //----------расчеты количества-----------
+    $pack_limit = 50;
+    $pack_limit_prev = $pack_limit - 1;
+    // $requests_value = ceil($total / $pack_limit);       //количество запросов
+    $requests_value = count($arDeal);                                  //количество запросов
+    $batch_value = ceil($requests_value / $pack_limit); //количество батчей
+    $batch_levels = array();
+    $counter = $requests_value;
+    while ($counter > $pack_limit) {
+        $counter = ceil($counter / $pack_limit);
+        $batch_levels[] = $counter;                     //количество батчей каждого уровня
+    }
+    if (!($batch_levels)) {
+        $batch_levels[0] = 1; //если все поместится в 1 батч
+    }
+
+    echo '<pre>';
+        print_r($batch_levels);
+    echo '</pre>';
+
+    //----------формируем запросы в батчи-----------
+    $e = 1;
+    $batches = array();
+    $j = 0;
+    while ($e <= $batch_value) {
+        if ($requests_value > $pack_limit) {
+            $inbatch_requests = $pack_limit;
+            $requests_value = $requests_value - $pack_limit; //сколько еще запросов осталось запаковать
+        }
+        else {
+            $inbatch_requests = $requests_value;
+        }
+        //формируем батч
+        $batch = array('halt'=>0, 'cmd'=>array());
+        $i = 1;
+    
+        while ($i <= $inbatch_requests) {
+            $batch['cmd']['list'.$i] = $method.'?'
+                .http_build_query(array(
+                    "ID" => $arDeal[$j][2],
+                    "fields" => array(
+                        "UF_CRM_1628167713" => $arDeal[$j][1]            
+                    )
+                ));
+            $i++;
+            $j++;
+        }
+        $batches[] = $batch;
+        $e++;
+    }
+
+    echo '<pre>';
+        print_r($batches);
+    echo '</pre>';
+
+    //----------формируем вложенные батчи-----------
+    foreach ($batch_levels as $level => $amount) {
+        $extra_batches = array();
+        $current_batch = current($batches);
+        while ($current_batch) {
+            $extra_batch = array('halt'=>0, 'cmd'=>array());
+            $counter = 1;
+            while ($counter <= $pack_limit and $current_batch) {
+                $extra_batch['cmd']['batch'.$counter] = 'batch?'
+                    .http_build_query($current_batch);
+                $current_batch = next($batches);
+                $counter++;
+            }
+            $extra_batches[] = $extra_batch;
+        }
+        $batches = $extra_batches;
+    }
+
+    echo '<pre>';
+        print_r($batches);
+    echo '</pre>';
+
+    // ---------основной запрос---------
+    $queryUrl = $hook.'batch';
+    $queryData = http_build_query($extra_batch);
+    $curl = curl_init();
+    curl_setopt_array($curl, array(
+        CURLOPT_SSL_VERIFYPEER => 0,
+        CURLOPT_POST => 1,
+        CURLOPT_HEADER => 0,
+        CURLOPT_RETURNTRANSFER => 1,
+        CURLOPT_URL => $queryUrl,
+        CURLOPT_POSTFIELDS => $queryData,
+    ));
+    $result0 = curl_exec($curl);
+    curl_close($curl);
+    $result = json_decode($result0, 1);
+    $result = $result['result']['result'];
+
+    echo '<pre>';
+        echo 'queryData ';
+        print_r($queryData);
+    echo '</pre>';
+
+    echo '<pre>';
+        echo 'result ';
+        print_r($result);
+    echo '</pre>';
+
+    echo '<pre>';
+        echo 'result0 ';
+        print_r($result0);
+    echo '</pre>';
+
+    // // //---------собираем ответ в общий массив---------
+    // foreach ($batch_levels as $level => $amount) {
+    //     $result_dump = array();
+    //     foreach ($result as $key => $value) {
+    //         $result2 = array_values($value['result']);
+    //         $result_dump = array_merge($result_dump, $result2);
+    //     }
+    //     $result = $result_dump;
+    // }
+    // $all = array();
+    // foreach ($result as $key => $value) {
+    //     $all = array_merge($all, $value);
+    // }
+    //echo json_encode($all);
+    //return $all;
 }
 ?>

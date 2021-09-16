@@ -1,3 +1,6 @@
+var Recordings = null;
+var recordingsNotFound = null;
+var percent = 0;
 var warningStatement = document.getElementById("warningStatement");
 var successStatement = document.getElementById("successStatement");
 var Step2 = document.getElementById("Step2");
@@ -39,7 +42,7 @@ $(document).ready(function () {
         })
 
         $('#InputChooseFileAdd_Button').click(function () {
-            percent += 2;
+            percent = 2;
             $( "#general-progress" ).css('width', percent + '%');
             $( "#progress-value" ).html(percent + '%');
             $( "#progress" ).prop('hidden', false);
@@ -108,7 +111,7 @@ $(document).ready(function () {
                         data        : {'Step' : '2', 'recordings': JSON.stringify(Recordings)},
 
                         beforeSend : function(){
-                            percent += 5;
+                            percent += 12;
                             $( "#general-progress" ).css('width', percent + '%');
                             $( "#progress-value" ).html(percent + '%');
                             successStatement.innerHTML = 'Start search for the company ID by internal number';
@@ -118,7 +121,7 @@ $(document).ready(function () {
                         success     : function(respond, status, jqXHR ){
                             // console.log(respond);
                             Recordings = (JSON.parse(respond))['recordings'];
-                            percent += 5;
+                            percent += 13;
                             $( "#general-progress" ).css('width', percent + '%');
                             $( "#progress-value" ).html(percent + '%');
                             successStatement.innerHTML = 'Finish search for the company ID by internal number';
@@ -167,11 +170,11 @@ $(document).ready(function () {
                                         percent += 10;
                                     }
 
-                                    if (!respond.includes('recordingsNotFound')){
-                                        percent += 10;
-                                    }
+                                    // if (!respond.includes('recordingsNotFound')){
+                                    //     percent += 10;
+                                    // }
 
-                                    percent += 20;
+                                    percent += 35;
                                     $( "#general-progress" ).css('width', percent + '%');
                                     $( "#progress-value" ).html(percent + '%');
                                     successStatement.innerHTML = 'Finish search for a deal by company ID';
@@ -321,4 +324,161 @@ function printTableNoShipment(data) {
                     </table>
                 </div>`;
     return htmlTable;
-}       
+}
+
+function sleep(ms) {
+    ms += new Date().getTime();
+    while (new Date() < ms){}
+    console.log('next ajax');
+}
+
+function updateBalance() {
+
+        let Go = confirm('Вы уверены что хотите обновить баланс у ' + Recordings.length + ' сделок?');
+        if (Go) {
+            if (percent == 100) {
+                percent = 90;
+                $( ".fa-spinner" ).prop('hidden', false);
+                $( "#progress-value" ).html(percent + '%');
+                $( "#general-progress" ).removeClass('bg-success');
+                $( "#general-progress" ).addClass('progress-bar-animated');
+            }
+            
+            let total = Recordings.length;          // Всего записей в выборке
+            let calls = total;                  // Сколько запросов надо сделать
+            let current_call = 0;                // Номер текущего запроса
+            let call_count = 0;                  // Счетчик вызовов для соблюдения условия не больше 2-х запросов в секунду
+            let batch = 150;                // записей в пачке
+            let call_batch = Math.ceil(total / batch);  // сколько запрсов надо сделать            
+            let k = Math.floor(5 / call_batch * 100) / 100 ;
+
+            let arData = [];                // Массив для вызова callBatch
+
+            do {
+                current_call++;
+                arData.push(Recordings[current_call - 1]);
+
+                if ((arData.length == batch) || (current_call == calls)) {
+                    call_count++;
+                    $.ajax({
+                        url         : 'handler.php',
+                        type        : 'POST', // важно!
+                        data        : {'Step' : '4', 'recordings': JSON.stringify(arData)},
+
+                        beforeSend : function(){
+                            percent += k;
+                            $( "#general-progress" ).css('width', percent + '%');
+                            $( "#progress-value" ).html(percent + '%');
+                            successStatement.innerHTML = `Start batch update Balance`;
+                        },
+
+                        complete : function(){
+                            successStatement.innerHTML = `Finish batch update Balance`;
+                        },
+
+                        // функция успешного ответа сервера
+                        success     : function(respond, status, jqXHR ){
+                            // console.log(respond);
+                            percent += k;
+                            $( "#general-progress" ).css('width', percent + '%');
+                            $( "#progress-value" ).html(percent + '%');
+                            successStatement.innerHTML = `Finish batch update Balance`;
+
+                            if (respond.includes('recordings')){
+                                Recordings = (JSON.parse(respond))['recordings'];
+                                console.log(Recordings);
+                            }
+
+                            if (Math.round(percent) >= 100) {
+                                $( ".fa-spinner" ).prop('hidden', true);
+                                $( "#progress-value" ).html(Math.round(percent) + '% Finish!');
+                                $( "#general-progress" ).addClass('bg-success');
+                                $( "#general-progress" ).removeClass('progress-bar-animated');    
+                            }
+                        },
+                    });
+                    arData.length = 0;
+                    sleep(1000);
+                }
+                if (call_count == 6) {call_count = 0; sleep(180000);}  
+            } while (current_call < calls);
+
+
+
+            // $.ajax({
+            //     url         : 'handler.php',
+            //     type        : 'POST', // важно!
+            //     data        : {'Step' : '4', 'recordings': JSON.stringify(Recordings)},
+
+            //     beforeSend : function(){
+            //         percent += 5;
+            //         $( "#general-progress" ).css('width', percent + '%');
+            //         $( "#progress-value" ).html(percent + '%');
+            //         successStatement.innerHTML = 'Start update Balance';
+            //     },
+
+            //     complete : function(){
+            //         successStatement.innerHTML = 'Finish update Balance';
+            //     },
+
+            //     // функция успешного ответа сервера
+            //     success     : function(respond, status, jqXHR ){
+            //         // console.log(respond);
+            //         percent += 5;
+            //         $( "#general-progress" ).css('width', percent + '%');
+            //         $( "#progress-value" ).html(percent + '%');
+            //         successStatement.innerHTML = 'Finish update Balance';
+
+            //         if (respond.includes('recordings')){
+            //             Recordings = (JSON.parse(respond))['recordings'];
+            //             console.log(Recordings);
+            //         }
+
+            //         if (percent == 100) {
+            //             $( ".fa-spinner" ).prop('hidden', true);
+            //             $( "#progress-value" ).html(percent + '% Finish!');
+            //             $( "#general-progress" ).addClass('bg-success');
+            //             $( "#general-progress" ).removeClass('progress-bar-animated');    
+            //         }
+            //     },
+            // });
+        }
+}
+
+function get_csv(name) {
+        let data = null;
+        let pattern = 0;
+        if (name == 'getCSVStep2') {data = RecordingsNotFound; pattern = 1;}
+        if (name == 'getCSVStep4') {data = Recordings; pattern = 2;} 
+        if (name == 'getCSVStep41') {data = recordingsNotFound; pattern = 3;}        
+        $.ajax({
+            url         : 'handler.php',
+            type        : 'POST', // важно!
+            data        : {'Step' : '5', 'name': name, 'data' : JSON.stringify(data), 'pattern' : pattern},
+
+            // функция успешного ответа сервера
+            success     : function(respond, status, jqXHR ){
+                // console.log(respond);
+                /*
+                   * Make CSV downloadable
+                   */
+                  var downloadLink = document.createElement("a");
+                  var fileData = ['\ufeff'+respond];
+
+                  var blobObject = new Blob(fileData,{
+                     type: "text/csv;charset=utf-8;"
+                   });
+
+                  var url = URL.createObjectURL(blobObject);
+                  downloadLink.href = url;
+                  downloadLink.download = name+".csv";
+
+                  /*
+                   * Actually download CSV
+                   */
+                  document.body.appendChild(downloadLink);
+                  downloadLink.click();
+                  document.body.removeChild(downloadLink);
+            },
+        });
+    }       

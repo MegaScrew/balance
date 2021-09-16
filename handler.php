@@ -47,6 +47,7 @@ switch ($_POST['Step']) {
 		
 		// echo '<pre>';
 		// 	echo 'Step 2 ';
+		// 	print_r($tempRecordings
 		// echo '</pre>';	
 		break;
 	case '3':
@@ -90,9 +91,10 @@ switch ($_POST['Step']) {
 		break;
 	case '4':
 		$recordings = json_decode($_POST['recordings'], true);
-		$temp = issueAnInvoice('crm.deal.update', $recordings);
+		$temp = updateBalance('crm.deal.update', $recordings);
+		// $temp = fastUpdateDeals($recordings);
 
-		$params = array('Step5' => 'finish');
+		$params = array('step' => 4,'result' => 'finish', 'result' => $temp);
 		echo(json_encode($params, JSON_UNESCAPED_UNICODE));
 
 		// echo '<pre>';
@@ -100,6 +102,22 @@ switch ($_POST['Step']) {
 		// 	print_r(count($recordings));
 		// 	print_r($temp);
 		// echo '</pre>';
+		break;
+	case '5':
+		header('Content-Type: text/csv');
+		header('Content-Disposition: attachment; filename = '.$_POST['name'].'.csv');
+
+		$output = fopen("php://output", "w");
+
+		$pattern = $_POST['pattern'];
+		$name = $_POST['name'];
+		$name = $name.'_data';
+		$data = json_decode($_POST['data'], true);
+
+		getCSV($data, $name, $output, $pattern);
+
+		fclose($output);
+
 		break;
 	default:
 		echo '<pre>';
