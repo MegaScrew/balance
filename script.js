@@ -348,6 +348,9 @@ function updateBalance() {
             let calls = total;                  // Сколько запросов надо сделать
             let current_call = 0;                // Номер текущего запроса
             let call_count = 0;                  // Счетчик вызовов для соблюдения условия не больше 2-х запросов в секунду
+            let batch = 150;                // записей в пачке
+            let call_batch = Math.ceil(total / batch);  // сколько запрсов надо сделать            
+            let k = Math.floor((5 / call_batch * 100) / 100 );
 
             let arData = [];                // Массив для вызова callBatch
 
@@ -355,14 +358,15 @@ function updateBalance() {
                 current_call++;
                 arData.push(Recordings[current_call - 1]);
 
-                if ((arData.length == 150) || (current_call == calls)) {
+                if ((arData.length == batch) || (current_call == calls)) {
+                    call_count++;
                     $.ajax({
                         url         : 'handler.php',
                         type        : 'POST', // важно!
                         data        : {'Step' : '4', 'recordings': JSON.stringify(arData)},
 
                         beforeSend : function(){
-                            percent += 5;
+                            percent += k;
                             $( "#general-progress" ).css('width', percent + '%');
                             $( "#progress-value" ).html(percent + '%');
                             successStatement.innerHTML = 'Start update Balance';
@@ -375,7 +379,7 @@ function updateBalance() {
                         // функция успешного ответа сервера
                         success     : function(respond, status, jqXHR ){
                             // console.log(respond);
-                            percent += 5;
+                            percent += k;
                             $( "#general-progress" ).css('width', percent + '%');
                             $( "#progress-value" ).html(percent + '%');
                             successStatement.innerHTML = 'Finish update Balance';
@@ -385,7 +389,7 @@ function updateBalance() {
                                 console.log(Recordings);
                             }
 
-                            if (percent == 100) {
+                            if (percent >= 100) {
                                 $( ".fa-spinner" ).prop('hidden', true);
                                 $( "#progress-value" ).html(percent + '% Finish!');
                                 $( "#general-progress" ).addClass('bg-success');
@@ -393,8 +397,9 @@ function updateBalance() {
                             }
                         },
                     });
-                    sleep(1000);
                     arData.length = 0;
+                    sleep(1000);
+                    if (call_count == 6) {call_count = 0; sleep(180000);}
                 }
             } while (current_call < calls);
 
@@ -438,4 +443,42 @@ function updateBalance() {
             //     },
             // });
         }
+}
+
+function get_csv(name) {
+        let data = null;
+        let pattern = 0;
+        if (name == 'getCSVStep2') {data = RecordingsNotFound; pattern = 1;}
+        if (name == 'getCSVStep4') {data = Recordings; pattern = 2;} 
+        if (name == 'getCSVStep41') {data = recordingsNotFound; pattern = 3;}        
+        $.ajax({
+            url         : 'handler.php',
+            type        : 'POST', // важно!
+            data        : {'Step' : '5', 'name': name, 'data' : JSON.stringify(data), 'pattern' : pattern},
+
+            // функция успешного ответа сервера
+            success     : function(respond, status, jqXHR ){
+                // console.log(respond);
+                /*
+                   * Make CSV downloadable
+                   */
+                  var downloadLink = document.createElement("a");
+                  var fileData = ['\ufeff'+respond];
+
+                  var blobObject = new Blob(fileData,{
+                     type: "text/csv;charset=utf-8;"
+                   });
+
+                  var url = URL.createObjectURL(blobObject);
+                  downloadLink.href = url;
+                  downloadLink.download = name+".csv";
+
+                  /*
+                   * Actually download CSV
+                   */
+                  document.body.appendChild(downloadLink);
+                  downloadLink.click();
+                  document.body.removeChild(downloadLink);
+            },
+        });
     }       
