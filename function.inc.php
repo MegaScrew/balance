@@ -399,6 +399,11 @@ function getCSV(array $data, string $name = '', &$output, string $pattern = '1')
     }
 }
 
+
+/*
+*Test function batch in batch
+*
+*/
 function fastUpdateDeals(array $arDeal){
     // $hook = 'https://rahalcrm.bitrix24.ru/rest/1644/2rm45f7ep5heth5b/'; //указываем адрес вебхука
     $hook = C_REST_WEB_HOOK_URL;
