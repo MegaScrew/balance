@@ -105,7 +105,7 @@ switch ($_POST['Step']) {
 		break;
 	case '5':
 		header('Content-Type: text/csv');
-		header('Content-Disposition: attachment; filename = '.$_POST['name'].' c '.$_POST['first_day'].'po'.$_POST['last_day'].'.csv');
+		header('Content-Disposition: attachment; filename = '.$_POST['name'].'.csv');
 
 		$output = fopen("php://output", "w");
 
